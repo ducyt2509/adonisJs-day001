@@ -1,21 +1,31 @@
 import { LucidModel, ModelAttributes } from '@adonisjs/lucid/types/model'
 import { Data } from '../constants/constants.js'
-// import { Data } from '../constants/constants.js'
 
 export class BaseService<T extends LucidModel> {
   constructor(private model: T) { }
 
-  //: Promise<Data<T>>
-  async pagination(page: number, perPage: number, query?: any): Promise<Data<T>> {
-    let result = null
+  async pagination(page: number, perPage: number, query?: any): Promise<Data<InstanceType<T>>> {
+    let result
+
     if (query) {
-      result = await this.model.query().paginate(page, perPage)
+      result = await this.model.query().where(query).paginate(page, perPage)
     } else {
       result = await this.model.query().paginate(page, perPage)
     }
+
+    const { total } = result.getMeta()
+
+    if (total / perPage < page) {
+      throw new Error('Page is not available')
+    }
+
     return {
-      data: result.all(),
-      pagination: result.getMeta(),
+      data: result.all() as InstanceType<T>[],
+      pagination: {
+        total,
+        perPage,
+        page,
+      },
     }
   }
 
