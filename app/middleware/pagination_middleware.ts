@@ -3,15 +3,12 @@ import type { NextFn } from '@adonisjs/core/types/http'
 
 export default class PaginationMiddleware {
   async handle(ctx: HttpContext, next: NextFn) {
-    /**
-     * Middleware logic goes here (before the next call)
-     */
-    console.log(ctx)
+    const query = ctx.request.qs()
+    query.page = !query.page || (query.page && !Number(query.page)) ? 1 : Number(query.page)
+    query.perPage =
+      !query.perPage || (query.perPage && !Number(query.perPage)) ? 10 : Number(query.perPage)
 
-    /**
-     * Call next method in the pipeline and return its output
-     */
-    const output = await next()
-    return output
+    ctx.request.updateQs(query)
+    return await next()
   }
 }
